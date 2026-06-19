@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: sales_daily_summary
+    description: "Daily sales summary by product category/brand and customer geography. Powers Sales BI dashboards."
+    columns:
+      - name: order_date
+        tests: [not_null]
+      - name: total_revenue
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+  - name: sales_customer_ltv
+    description: "Per-customer lifetime value and order behaviour for the Sales team."
+    columns:
+      - name: customer_id
+        tests: [unique, not_null]
+      - name: lifetime_value
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0

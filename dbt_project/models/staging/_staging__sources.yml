@@ -1,0 +1,50 @@
+version: 2
+
+sources:
+  - name: stg
+    database: analytics
+    schema: stg
+    loader: redshift_copy
+    loaded_at_field: updated_at
+
+    # Validation: alert if a batch hasn't refreshed within expected SLA
+    freshness:
+      warn_after: {count: 6, period: hour}
+      error_after: {count: 12, period: hour}
+
+    tables:
+      - name: stg_customers
+        description: "Landing table for customer records (latest COPY batch from S3)."
+        columns:
+          - name: customer_id
+            tests:
+              - not_null
+          - name: email
+            tests:
+              - not_null
+
+      - name: stg_products
+        description: "Landing table for product records (latest COPY batch from S3)."
+        columns:
+          - name: product_id
+            tests:
+              - not_null
+          - name: price
+            tests:
+              - not_null
+
+      - name: stg_orders
+        description: "Landing table for order records (latest COPY batch from S3)."
+        columns:
+          - name: order_id
+            tests:
+              - not_null
+          - name: customer_id
+            tests:
+              - not_null
+          - name: product_id
+            tests:
+              - not_null
+          - name: total_amount
+            tests:
+              - not_null

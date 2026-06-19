@@ -1,0 +1,18 @@
+# Example ~/.dbt/profiles.yml
+# Credentials are pulled from environment variables (set as Airflow
+# Variables / Connections and exported before the dbt BashOperator runs).
+
+enterprise_dwh:
+  target: prod
+  outputs:
+    prod:
+      type: redshift
+      host: "{{ env_var('RS_HOST') }}"
+      user: "{{ env_var('RS_USER') }}"
+      password: "{{ env_var('RS_PASSWORD') }}"
+      port: 5439
+      dbname: "{{ env_var('RS_DATABASE') }}"
+      schema: dwh
+      threads: 4
+      sslmode: require
+      ra3_node: true

@@ -1,0 +1,92 @@
+# Environment & Credentials
+.env
+.env.local
+.env.*.local
+.env.example  # Keep in repo if it's a template
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+PIPFILE.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Airflow
+airflow/logs/
+airflow/webserver_config.py
+airflow/webserver_pid
+.airflowignore
+unittests.cfg
+
+# dbt
+dbt_packages/
+traffic_event_log_artifacts/
+target/
+
+# Local development & testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# OS-specific
+Thumbs.db
+.AppleDouble
+.LSOverride
+*.lnk
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.lock
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Data files (optional; adjust as needed)
+*.csv
+*.parquet
+*.pkl
+
+# S3 / MinIO local testing
+minio_data/
+postgres_source_data/
+postgres_dw_data/
+airflow_db_data/

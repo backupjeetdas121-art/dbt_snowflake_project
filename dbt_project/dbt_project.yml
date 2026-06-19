@@ -1,0 +1,42 @@
+name: 'enterprise_dwh'
+version: '1.0.0'
+config-version: 2
+
+profile: 'enterprise_dwh'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  enterprise_dwh:
+    staging:
+      +schema: staging
+      +materialized: view
+
+    marts:
+      dimension:
+        +schema: dwh
+        +materialized: table
+      fact:
+        +schema: dwh
+        +materialized: table
+      sales:
+        +schema: sales_mart
+        +materialized: table
+      marketing:
+        +schema: marketing_mart
+        +materialized: table
+
+snapshots:
+  enterprise_dwh:
+    +target_schema: snapshots
+    +strategy: timestamp

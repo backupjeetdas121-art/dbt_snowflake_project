@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: marketing_customer_segments
+    description: "RFM-based customer segmentation for campaign targeting."
+    columns:
+      - name: customer_id
+        tests: [unique, not_null]
+      - name: customer_segment
+        tests:
+          - accepted_values:
+              values: ['Champion', 'Loyal', 'At Risk', 'Needs Attention']
+
+  - name: marketing_channel_performance
+    description: "Acquisition channel performance: customers, orders, revenue, conversion rate."
+    columns:
+      - name: acquisition_channel
+        tests: [unique, not_null]
+      - name: conversion_rate
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1

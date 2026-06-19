@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: "Cleaned customer records from the latest extract batch."
+    columns:
+      - name: customer_id
+        tests: [unique, not_null]
+      - name: email
+        tests: [not_null]
+
+  - name: stg_products
+    description: "Cleaned product records from the latest extract batch."
+    columns:
+      - name: product_id
+        tests: [unique, not_null]
+      - name: price
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+  - name: stg_orders
+    description: "Cleaned order records from the latest extract batch."
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: order_status
+        tests:
+          - accepted_values:
+              values: ['pending', 'shipped', 'delivered', 'cancelled', 'returned']
+      - name: total_amount
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+  - name: int_customers_current
+    description: "Full current-state view of all customers, maintained via incremental merge. Source for the SCD2 customer snapshot."
+    columns:
+      - name: customer_id
+        tests: [unique, not_null]
+
+  - name: int_products_current
+    description: "Full current-state view of all products, maintained via incremental merge. Source for the SCD2 product snapshot."
+    columns:
+      - name: product_id
+        tests: [unique, not_null]

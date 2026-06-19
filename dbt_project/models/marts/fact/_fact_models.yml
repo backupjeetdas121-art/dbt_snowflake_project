@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: fact_orders
+    description: "Order-level fact table at the order grain, joined to current dimension surrogate keys."
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: customer_sk
+        tests:
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_sk
+      - name: product_sk
+        tests:
+          - relationships:
+              to: ref('dim_products')
+              field: product_sk
+      - name: total_amount
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: order_status
+        tests:
+          - accepted_values:
+              values: ['pending', 'shipped', 'delivered', 'cancelled', 'returned']

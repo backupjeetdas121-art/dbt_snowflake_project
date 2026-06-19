@@ -1,0 +1,154 @@
+version: '3.8'
+
+services:
+
+  postgres_source:
+    image: postgres:16
+    container_name: postgres_source
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: retail
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      TZ: Asia/Kolkata
+      PGTZ: Asia/Kolkata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_source_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d retail"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres_dw:
+    image: postgres:16
+    container_name: postgres_dw
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: warehouse
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      TZ: Asia/Kolkata
+      PGTZ: Asia/Kolkata
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_dw_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d warehouse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  airflow_db:
+    image: postgres:16
+    container_name: airflow_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: airflow
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      TZ: Asia/Kolkata
+      PGTZ: Asia/Kolkata
+    ports:
+      - "5434:5432"
+    volumes:
+      - airflow_db_data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@test.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+  airflow-init:
+
+    image: apache/airflow:2.10.0
+
+    container_name: airflow-init
+
+    depends_on:
+      - airflow_db
+
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow_db/airflow
+
+    command: >
+      bash -c "
+      airflow db migrate &&
+      airflow users create
+      --username admin
+      --password admin
+      --firstname Jeet
+      --lastname Das
+      --role Admin
+      --email admin@test.com
+      "
+
+  airflow-webserver:
+
+    image: apache/airflow:2.10.0
+
+    container_name: airflow-webserver
+
+    restart: always
+
+    depends_on:
+      - airflow_db
+
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow_db/airflow
+
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+
+    ports:
+      - "8080:8080"
+
+    command: webserver
+
+  airflow-scheduler:
+
+    image: apache/airflow:2.10.0
+
+    container_name: airflow-scheduler
+
+    restart: always
+
+    depends_on:
+      - airflow_db
+
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow_db/airflow
+
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+
+    command: scheduler
+
+volumes:
+  postgres_source_data:
+  postgres_dw_data:
+  airflow_db_data:
+  minio_data:

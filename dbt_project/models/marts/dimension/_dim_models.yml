@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: "Type-2 SCD customer dimension. One row per customer per attribute-version, with effective_from/effective_to and is_current."
+    columns:
+      - name: customer_sk
+        description: "Surrogate key (customer_id + effective_from)."
+        tests: [unique, not_null]
+      - name: customer_id
+        tests: [not_null]
+      - name: is_current
+        tests:
+          - accepted_values:
+              values: [true, false]
+
+  - name: dim_products
+    description: "Type-2 SCD product dimension. One row per product per attribute-version, with effective_from/effective_to and is_current."
+    columns:
+      - name: product_sk
+        description: "Surrogate key (product_id + effective_from)."
+        tests: [unique, not_null]
+      - name: product_id
+        tests: [not_null]
+      - name: is_current
+        tests:
+          - accepted_values:
+              values: [true, false]
