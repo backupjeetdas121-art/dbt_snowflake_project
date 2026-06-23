@@ -2,7 +2,7 @@
 
 {{
     config(
-      target_schema='snapshots',
+      target_schema='warehouse',
       unique_key='product_id',
       strategy='timestamp',
       updated_at='updated_at',

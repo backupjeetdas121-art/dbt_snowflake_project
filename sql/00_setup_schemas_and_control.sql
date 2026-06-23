@@ -4,10 +4,6 @@
 -- or a migration tool such as Flyway / sqlfluff / dbt run-operation).
 -- =====================================================================
 
--- Landing zone for the latest incremental batch from S3
-CREATE SCHEMA IF NOT EXISTS stg;
-
--- Operational metadata / watermarks for the extractor
 CREATE SCHEMA IF NOT EXISTS etl_control;
 
 -- ---------------------------------------------------------------------

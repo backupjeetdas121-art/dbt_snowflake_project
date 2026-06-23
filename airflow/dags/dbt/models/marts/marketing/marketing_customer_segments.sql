@@ -10,7 +10,7 @@ with fact as (
 ),
 
 customers as (
-    select customer_sk, customer_id, email, acquisition_channel, country, signup_date
+    select customer_sk, customer_id, email, signup_date
     from {{ ref('dim_customers') }}
     where is_current = true
 ),
@@ -38,8 +38,6 @@ scored as (
 select
     c.customer_id,
     c.email,
-    c.acquisition_channel,
-    c.country,
     c.signup_date,
     s.last_order_date,
     s.recency_days,

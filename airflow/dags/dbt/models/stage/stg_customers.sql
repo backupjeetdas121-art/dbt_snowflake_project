@@ -12,11 +12,8 @@
         trim(last_name) as last_name,
         lower(email) as email,
         phone,
-        address,
         city,
-        state,
         country,
-        coalesce(acquisition_channel,'unknown') as acquisition_channel,
         cast(signup_date as date) as signup_date,
         cast(created_at as timestamp) as created_at,
         cast(updated_at as timestamp) as updated_at
@@ -26,3 +23,5 @@
     where cast(updated_at as timestamp) > (select coalesce(max(cast(updated_at as timestamp)), '1900-01-01') from {{ this }})
     or customer_id not in (select customer_id from {{ this }})
     {% endif %}
+
+

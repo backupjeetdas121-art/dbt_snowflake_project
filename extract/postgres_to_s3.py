@@ -1,4 +1,4 @@
-import os
+﻿import os
 import time
 import logging
 from datetime import datetime, timezone
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # Configuration
 # ---------------------------------------------------------------------
 PG_CONFIG = {
-    "host": os.getenv("PG_HOST"),
+    "host": os.getenv("PG_HOST", "postgres_dw"),
     "port": os.getenv("PG_PORT", "5432"),
     "dbname": os.getenv("PG_DATABASE"),
     "user": os.getenv("PG_USER"),
@@ -89,6 +89,62 @@ def get_sf_connection():
     logger.info("SF_ACCOUNT=%s", os.getenv("SF_ACCOUNT"))
 
     return snowflake.connector.connect(**SF_CONFIG)
+
+
+def normalize_timestamp_columns(df: pd.DataFrame) -> pd.DataFrame:
+    timestamp_cols = [
+        col for col in df.columns
+        if col.lower().endswith(("_at", "_date"))
+    ]
+
+    if not timestamp_cols:
+        return df
+
+    logger.info("Normalizing timestamp columns for parquet: %s", timestamp_cols)
+
+    for col in timestamp_cols:
+        if col not in df.columns:
+            continue
+
+        if not pd.api.types.is_datetime64_any_dtype(df[col]):
+            parsed = pd.to_datetime(df[col], errors="coerce", utc=False)
+            if parsed.isna().all() and df[col].notna().any():
+                logger.warning(
+                    "Timestamp parse produced all nulls for %s; original dtype=%s",
+                    col,
+                    df[col].dtype,
+                )
+            elif parsed.isna().sum() > 0:
+                logger.warning(
+                    "Timestamp parse produced %s nulls for %s",
+                    parsed.isna().sum(),
+                    col,
+                )
+            df[col] = parsed
+
+        if pd.api.types.is_datetime64tz_dtype(df[col]):
+            df[col] = df[col].dt.tz_convert("UTC").dt.tz_localize(None)
+
+        if not pd.api.types.is_datetime64_any_dtype(df[col]):
+            try:
+                df[col] = df[col].astype("datetime64[us]")
+            except Exception as exc:
+                logger.warning(
+                    "Failed to cast column %s to datetime64[us]: %s",
+                    col,
+                    exc,
+                )
+        else:
+            try:
+                df[col] = df[col].astype("datetime64[us]")
+            except Exception as exc:
+                logger.warning(
+                    "Failed to downcast column %s to datetime64[us]: %s",
+                    col,
+                    exc,
+                )
+
+    return df
 
 
 # ---------------------------------------------------------------------
@@ -170,7 +226,7 @@ def extract_table_to_s3(**context):
                 "Extracting records for table=%s where %s > %s",tablename,"updated_at",latest_timestamp
                 )
 
-            query = f"""SELECT * FROM {tablename} WHERE updated_at > %(latest_timestamp)s ORDER BY updated_at desc"""
+            query = f"""SELECT * FROM postgres_table.{tablename} WHERE updated_at > %(latest_timestamp)s ORDER BY updated_at desc"""
 
             query_start = time.time()
 
@@ -190,6 +246,8 @@ def extract_table_to_s3(**context):
                 logger.info("No new data found for table=%s", tablename)
                 continue
 
+            df = normalize_timestamp_columns(df)
+
             execution_date = context["ds"]
             run_ts = context["ts_nodash"]
 
@@ -204,7 +262,14 @@ def extract_table_to_s3(**context):
 
             table = pa.Table.from_pandas(df)
 
-            pq.write_table(table,local_path,compression="snappy")
+            pq.write_table(
+                table,
+                local_path,
+                compression="snappy",
+                coerce_timestamps="us",
+                allow_truncated_timestamps=True,
+                use_deprecated_int96_timestamps=False,
+            )
 
             logger.info("Parquet generation completed in %.2f sec",time.time() - parquet_start)
 
@@ -226,7 +291,7 @@ def extract_table_to_s3(**context):
 
             logger.info("Max updated timestamp extracted: %s",updated_timestamp)
 
-            #update_latest_timestamp(tablename,updated_timestamp)
+            update_latest_timestamp(tablename,updated_timestamp)
 
             logger.info("SUCCESS | table=%s | rows=%s | duration=%.2f sec",tablename,len(df),time.time() - start_time)
 

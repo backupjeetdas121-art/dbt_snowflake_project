@@ -99,6 +99,7 @@ services:
 
     depends_on:
       - airflow_db
+      - postgres_dw
 
     environment:
         AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow_db/airflow
@@ -128,6 +129,7 @@ services:
 
     depends_on:
       - airflow_db
+      - postgres_dw
 
     environment:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow_db/airflow
