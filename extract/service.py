@@ -6,7 +6,6 @@ from extract.utils.db_utils import get_pg_connection
 from extract.utils.parquet_utils import write_dataframe_to_parquet
 from extract.repository import get_latest_timestamp, update_latest_timestamp
 from extract.utils.s3_utils import upload_file_to_s3
-from extract.utils.transform_utils import normalize_timestamp_columns
 from extract.utils.logging_config import logger
 
 
@@ -26,36 +25,30 @@ def _read_table(table_name: str, latest_timestamp: str) -> pd.DataFrame:
     return df
 
 
-def _write_extract_output(table_name: str, df: pd.DataFrame, execution_date: str, run_ts: str, execution_type: str) -> dict:
+def _write_extract_output(table_name: str, df: pd.DataFrame, execution_date: str, run_ts: str) -> dict:
     local_path = os.path.join("/tmp", f"{table_name}_{run_ts}.parquet")
 
-    if execution_type == "s3":
-        write_dataframe_to_parquet(df, local_path)
-        s3_key = build_s3_key(table_name, execution_date, run_ts)
-        upload_file_to_s3(local_path, S3_BUCKET, s3_key)
-        os.remove(local_path)
-        return {"table": table_name, "rows": len(df), "s3_key": s3_key}
-
-    if execution_type == "local":
-        write_dataframe_to_parquet(df, local_path)
-        return {"table": table_name, "rows": len(df), "local_path": local_path}
-
-    raise ValueError(f"Unsupported execution_type: {execution_type}")
+    write_dataframe_to_parquet(df, local_path)
+    s3_key = build_s3_key(table_name, execution_date, run_ts)
+    upload_file_to_s3(local_path, S3_BUCKET, s3_key)
+    os.remove(local_path)
+    return {"table": table_name, "rows": len(df), "s3_key": s3_key}
 
 
-def extract_table(table_name: str, execution_date: str, run_ts: str, execution_type: str = "s3") -> dict:
+
+def extract_table(table_name: str, execution_date: str, run_ts: str) -> dict:
     latest_timestamp = get_latest_timestamp(table_name)
     logger.info("Extracting table=%s with latest_timestamp=%s", table_name, latest_timestamp)
 
     df = _read_table(table_name, latest_timestamp)
     logger.info("Rows extracted for %s: %s", table_name, len(df))
+    print(type(df.columns))
 
     if df.empty:
         logger.info("No new data for table=%s", table_name)
         return {"table": table_name, "rows": 0, "status": "no_data"}
 
-    df = normalize_timestamp_columns(df)
-    result = _write_extract_output(table_name, df, execution_date, run_ts, execution_type)
+    result = _write_extract_output(table_name, df, execution_date, run_ts)
 
     updated_timestamp = str(df[TIMESTAMP_COLUMN].max())
     update_latest_timestamp(table_name, updated_timestamp)
@@ -64,10 +57,10 @@ def extract_table(table_name: str, execution_date: str, run_ts: str, execution_t
     return result
 
 
-def extract_all(execution_date: str, run_ts: str, execution_type: str = "s3") -> list[dict]:
+def extract_all(execution_date: str, run_ts: str) -> list[dict]:
     results = []
     for table_name in TABLE_CONFIG:
         logger.info("Starting extraction for table=%s", table_name)
-        results.append(extract_table(table_name, execution_date, run_ts, execution_type))
+        results.append(extract_table(table_name, execution_date, run_ts))
     logger.info("Completed extraction for %s tables", len(results))
     return results

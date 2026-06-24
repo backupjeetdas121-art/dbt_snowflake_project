@@ -41,10 +41,12 @@ SF_CONFIG = {
     "user": os.getenv("SF_USER"),
     "password": os.getenv("SF_PASSWORD"),
     "database": os.getenv("SF_DATABASE"),
-    "schema": os.getenv("SF_SCHEMA"),
+    "schema": os.getenv("SF_STAGE_SCHEMA", os.getenv("SF_SCHEMA", "STAGE")),
     "warehouse": os.getenv("SF_WAREHOUSE"),
     "role": os.getenv("SF_ROLE"),
 }
+
+CONTROL_SCHEMA = os.getenv("SF_CONTROL_SCHEMA", os.getenv("ETL_CONTROL_SCHEMA", "ETL_CONTROL"))
 
 S3_BUCKET = os.getenv("S3_RAW_BUCKET")
 S3_PREFIX = os.getenv("S3_RAW_PREFIX")
@@ -156,9 +158,9 @@ def get_latest_timestamp(table_name: str) -> str:
     conn = get_sf_connection()
 
     try:
-        query = """
+        query = f"""
             SELECT MAX(last_extracted_at) as latest_timestamp
-            FROM ETL_CONTROL.extract_latest_timestamp
+            FROM {CONTROL_SCHEMA}.extract_latest_timestamp
             WHERE table_name = %s
         """
 
@@ -186,11 +188,11 @@ def update_latest_timestamp(table_name: str, latest_timestamp_value: str):
     try:
         cur = conn.cursor()
 
-        cur.execute("DELETE FROM ETL_CONTROL.extract_latest_timestamp WHERE table_name = %s",(table_name))
+        cur.execute(f"DELETE FROM {CONTROL_SCHEMA}.extract_latest_timestamp WHERE table_name = %s", (table_name,))
 
         cur.execute(
-            """INSERT INTO ETL_CONTROL.extract_latest_timestamp(table_name,last_extracted_at,updated_at) VALUES (%s, %s, %s)""",
-            (table_name,latest_timestamp_value,datetime.now(timezone.utc))
+            f"""INSERT INTO {CONTROL_SCHEMA}.extract_latest_timestamp(table_name,last_extracted_at,updated_at) VALUES (%s, %s, %s)""",
+            (table_name, latest_timestamp_value, datetime.now(timezone.utc))
         )
 
         conn.commit()

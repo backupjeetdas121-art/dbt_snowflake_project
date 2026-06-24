@@ -9,8 +9,8 @@
 -- stg.stg_customers
 -- ---------------------------------------------------------------------
 
-DROP TABLE IF EXISTS RAW.customers;
-CREATE TABLE RAW.customers (
+DROP TABLE IF EXISTS RAW_table.customers;
+CREATE TABLE RAW_table.customers (
     customer_id         BIGINT,
     first_name          VARCHAR(100),
     last_name           VARCHAR(100),
@@ -18,7 +18,6 @@ CREATE TABLE RAW.customers (
     phone               VARCHAR(50),
     city                VARCHAR(100),
     country             VARCHAR(100),
-    signup_date         DATE,
     created_at          TIMESTAMP_NTZ,
     updated_at          TIMESTAMP_NTZ
 );
@@ -26,8 +25,8 @@ CREATE TABLE RAW.customers (
 -- ---------------------------------------------------------------------
 -- stg.stg_products
 -- ---------------------------------------------------------------------
-DROP TABLE IF EXISTS RAW.products;
-CREATE TABLE RAW.products (
+DROP TABLE IF EXISTS RAW_table.products;
+CREATE TABLE RAW_table.products (
     product_id   BIGINT,
     product_name VARCHAR(255),
     category     VARCHAR(100),
@@ -42,8 +41,8 @@ CREATE TABLE RAW.products (
 -- ---------------------------------------------------------------------
 -- stg.stg_orders
 -- ---------------------------------------------------------------------
-DROP TABLE IF EXISTS RAW.orders;
-CREATE TABLE RAW.orders (
+DROP TABLE IF EXISTS RAW_table.orders;
+CREATE TABLE RAW_table.orders (
     order_id       BIGINT,
     customer_id    BIGINT,
     product_id     BIGINT,

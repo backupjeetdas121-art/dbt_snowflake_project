@@ -20,7 +20,6 @@ models:
   enterprise_dwh:
     stage:
       +schema: stage
-      +materialized: view
 
     marts:
       dimension:

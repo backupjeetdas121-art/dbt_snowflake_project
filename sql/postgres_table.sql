@@ -15,12 +15,8 @@ CREATE TABLE postgres_table.customers (
     last_name           VARCHAR(100),
     email               VARCHAR(255),
     phone               VARCHAR(50),
-    address             VARCHAR(255),
     city                VARCHAR(100),
-    state               VARCHAR(100),
     country             VARCHAR(100),
-    acquisition_channel VARCHAR(50),
-    signup_date         DATE,
     created_at          TIMESTAMP,
     updated_at          TIMESTAMP
 );

@@ -15,4 +15,4 @@ def write_dataframe_to_parquet(df, local_path: str) -> None:
         coerce_timestamps=PARQUET_TIMESTAMP_UNIT,
         allow_truncated_timestamps=True,
         use_deprecated_int96_timestamps=False,
-    )
+)

@@ -1,13 +1,13 @@
 from datetime import datetime, timezone
 
 from extract.utils.db_utils import get_sf_connection
-from extract.utils.config import SOURCE_SCHEMA, TIMESTAMP_COLUMN, control_table_name
+from extract.utils.config import CONTROL_SCHEMA, control_table_name
 from extract.utils.logging_config import logger
 
 
 def get_latest_timestamp(table_name: str) -> str:
     logger.info("Fetching latest timestamp for table=%s", table_name)
-    conn = get_sf_connection()
+    conn = get_sf_connection(schema=CONTROL_SCHEMA)
 
     try:
         query = (
@@ -28,7 +28,7 @@ def get_latest_timestamp(table_name: str) -> str:
 
 def update_latest_timestamp(table_name: str, latest_timestamp_value: str):
     logger.info("Updating latest timestamp for table=%s", table_name)
-    conn = get_sf_connection()
+    conn = get_sf_connection(schema=CONTROL_SCHEMA)
 
     try:
         cur = conn.cursor()
