@@ -17,7 +17,6 @@ def _build_extract_query(table_name: str) -> str:
     return (
         f"SELECT * FROM {SOURCE_SCHEMA}.{table_name} "
         f"WHERE {TIMESTAMP_COLUMN} > %s "
-        f"WHERE {TIMESTAMP_COLUMN} > %s "
         f"ORDER BY {TIMESTAMP_COLUMN} DESC"
     )
 
@@ -25,7 +24,6 @@ def _build_extract_query(table_name: str) -> str:
 def _read_table(table_name: str, latest_timestamp: str) -> pd.DataFrame:
     query = _build_extract_query(table_name)
     logger.info("Reading table %s with latest_timestamp=%s", table_name, latest_timestamp)
-    parsed_timestamp = datetime.fromisoformat(latest_timestamp.replace("Z", "+00:00")) if latest_timestamp else None
     parsed_timestamp = datetime.fromisoformat(latest_timestamp.replace("Z", "+00:00")) if latest_timestamp else None
     with get_pg_connection() as pg_conn:
         df = pd.read_sql(query, pg_conn, params=(parsed_timestamp,))
