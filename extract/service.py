@@ -1,10 +1,11 @@
 import os
 from datetime import datetime
+import time
 
 import pandas as pd
 
-from extract.utils.config import TABLE_CONFIG, SOURCE_SCHEMA, TIMESTAMP_COLUMN, build_s3_key, S3_BUCKET
-from extract.utils.db_utils import get_pg_connection
+from extract.utils.config import TABLE_CONFIG, SOURCE_SCHEMA, TIMESTAMP_COLUMN, build_s3_key, S3_BUCKET, RAW_SCHEMA
+from extract.utils.db_utils import get_pg_connection, get_sf_connection
 from extract.utils.parquet_utils import write_dataframe_to_parquet
 from extract.repository import get_latest_timestamp, update_latest_timestamp
 from extract.utils.s3_utils import upload_file_to_s3
@@ -38,7 +39,42 @@ def _write_extract_output(table_name: str, df: pd.DataFrame, execution_date: str
     os.remove(local_path)
     return {"table": table_name, "rows": len(df), "s3_key": s3_key}
 
+def wait_for_row_count_sync(**context):
+    """Wait until PostgreSQL and Snowflake raw tables have matching row counts."""
+    tables = [table_name.lower() for table_name in TABLE_CONFIG]
+    snowflake_schema = RAW_SCHEMA
+    max_attempts = 10
+    sleep_seconds = 60
 
+    for attempt in range(1, max_attempts + 1):
+        pg_counts = {}
+        sf_counts = {}
+
+        with get_pg_connection() as pg_conn:
+            with pg_conn.cursor() as pg_cursor:
+                for table_name in tables:
+                    pg_cursor.execute(f"SELECT COUNT(*) FROM {SOURCE_SCHEMA}.{table_name}")
+                    pg_counts[table_name] = pg_cursor.fetchone()[0]
+
+        with get_sf_connection(schema=RAW_SCHEMA) as sf_conn:
+            with sf_conn.cursor() as sf_cursor:
+                for table_name in tables:
+                    sf_cursor.execute(f"SELECT COUNT(*) FROM {snowflake_schema}.{table_name.upper()}")
+                    sf_counts[table_name] = sf_cursor.fetchone()[0]
+
+        logger.info("Row count check attempt %s: postgres=%s, snowflake=%s", attempt, pg_counts, sf_counts)
+
+        if pg_counts == sf_counts:
+            logger.info("Row counts are synchronized for all configured tables.")
+            return True
+
+        if attempt < max_attempts:
+            logger.info("Row counts are not yet aligned. Waiting %s seconds before retrying.", sleep_seconds)
+            time.sleep(sleep_seconds)
+
+    raise AirflowException(
+        f"Timed out waiting for row counts to match for tables: {', '.join(tables)}"
+    )
 
 def extract_table(table_name: str, execution_date: str, run_ts: str, run_id: str | None = None) -> dict:
     run_id = run_id or f"{execution_date}_{run_ts}_{table_name}"
