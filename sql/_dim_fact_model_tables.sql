@@ -11,11 +11,8 @@ CREATE OR REPLACE TABLE Warehouse.SNAP_CUSTOMERS (
     LAST_NAME            VARCHAR,
     EMAIL                VARCHAR,
     PHONE                VARCHAR,
-    ADDRESS              VARCHAR,
     CITY                 VARCHAR,
-    STATE                VARCHAR,
     COUNTRY              VARCHAR,
-    ACQUISITION_CHANNEL  VARCHAR,
     SIGNUP_DATE          DATE
 );
 
@@ -45,11 +42,8 @@ CREATE OR REPLACE TABLE Warehouse.DIM_CUSTOMERS (
     LAST_NAME            VARCHAR,
     EMAIL                VARCHAR,
     PHONE                VARCHAR,
-    ADDRESS              VARCHAR,
     CITY                 VARCHAR,
-    STATE                VARCHAR,
     COUNTRY              VARCHAR,
-    ACQUISITION_CHANNEL  VARCHAR,
     SIGNUP_DATE          DATE,
     EFFECTIVE_FROM       TIMESTAMP,
     EFFECTIVE_TO         TIMESTAMP,
@@ -106,7 +100,6 @@ CREATE OR REPLACE TABLE Warehouse.CUSTOMER_LIFETIME_VALUE (
     LAST_NAME             VARCHAR,
     EMAIL                 VARCHAR,
     COUNTRY               VARCHAR,
-    ACQUISITION_CHANNEL   VARCHAR,
     TOTAL_ORDERS          NUMBER,
     LIFETIME_VALUE        NUMBER(18,2),
     FIRST_ORDER_DATE      TIMESTAMP,
@@ -134,7 +127,6 @@ CREATE OR REPLACE TABLE Warehouse.SALES_PERFORMANCE (
 ============================================================ */
 
 CREATE OR REPLACE TABLE Warehouse.CUSTOMER_ACQUISITION (
-    ACQUISITION_CHANNEL   VARCHAR,
     TOTAL_CUSTOMERS       NUMBER,
     TOTAL_ORDERS          NUMBER,
     TOTAL_REVENUE         NUMBER(18,2),
@@ -145,7 +137,6 @@ CREATE OR REPLACE TABLE Warehouse.CUSTOMER_ACQUISITION (
 CREATE OR REPLACE TABLE Warehouse.CUSTOMER_RFM_SEGMENTATION (
     CUSTOMER_ID           NUMBER,
     EMAIL                 VARCHAR,
-    ACQUISITION_CHANNEL   VARCHAR,
     COUNTRY               VARCHAR,
     SIGNUP_DATE           DATE,
     LAST_ORDER_DATE       TIMESTAMP,

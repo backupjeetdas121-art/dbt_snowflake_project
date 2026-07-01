@@ -14,8 +14,8 @@ models:
   - name: marketing_channel_performance
     description: "Acquisition channel performance: customers, orders, revenue, conversion rate."
     columns:
-      - name: acquisition_channel
-        tests: [unique, not_null]
+      - name: city
+        tests: [not_null]
       - name: conversion_rate
         tests:
           - dbt_utils.accepted_range:
